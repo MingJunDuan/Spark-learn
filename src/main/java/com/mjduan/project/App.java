@@ -23,8 +23,8 @@ public class App {
         SQLContext sqlContext = new SQLContext(sparkContext);
 
         Properties connectionProperties = new Properties();
-        connectionProperties.setProperty("user", "root");// 设置用户名
-        connectionProperties.setProperty("password", "dmj2010");// 设置密码
+        connectionProperties.setProperty("user", "root");//username
+        connectionProperties.setProperty("password", "123");// password
 
         Dataset<Row> mypay = sqlContext.read().jdbc(URL, "t_mypay", connectionProperties);
         mypay.show(3);
