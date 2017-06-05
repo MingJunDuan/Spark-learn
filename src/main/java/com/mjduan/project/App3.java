@@ -2,7 +2,7 @@ package com.mjduan.project;
 
 import java.util.Properties;
 
-import org.apache.spark.api.java.function.ForeachFunction;
+import com.mongodb.spark.MongoSpark;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
@@ -10,9 +10,12 @@ import org.apache.spark.sql.SparkSession;
 import static org.apache.spark.sql.functions.col;
 
 /**
- * Hans on 2017-06-05 07:04
+ * Read data from mysql then transform them to JSON and then write the result into mongoDB
+ *
+ *
+ * Hans on 2017-06-05 08:49
  */
-public class App2 {
+public class App3 {
 
     private static final String URL = "jdbc:mysql://localhost:3306/mybank2?useUnicode=true&characterEncoding=UTF-8";
 
@@ -24,18 +27,16 @@ public class App2 {
         SparkSession sparkSession = SparkSession.builder()
                 .appName("java spark mysql")
                 .master("local[4]")
+                .config("spark.mongodb.output.uri", "mongodb://127.0.0.1/spark-mongodb.output")
                 .getOrCreate();
 
-        Dataset<Row> rowDataset = sparkSession.read().jdbc(URL, "t_record", connectionProperties);
-        Dataset<Row> dataset = rowDataset.select(col("id"), col("ipv4"), col("ipv6"))
-                .orderBy(col("time"))
-                .limit(5);
-        dataset.foreach(new ForeachFunction<Row>() {
-            @Override
-            public void call(Row row) throws Exception {
-                System.out.println(row);
-            }
-        });
+        Dataset<Row> rowDataset = sparkSession.read().jdbc(URL, "t_mypay", connectionProperties);
+        Dataset<Row> dataset = rowDataset.select(col("id"), col("money"), col("remark"), col("user"), col("time"))
+                .orderBy(col("id"));
+        //Transform to json
+        Dataset<String> json = dataset.toJSON();
+        //Save the result to mongoDB
+        MongoSpark.save(json);
 
         sparkSession.close();
     }
